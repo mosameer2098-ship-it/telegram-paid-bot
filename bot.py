@@ -1,6 +1,10 @@
 import os
+import logging
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+# Logging enable karein taaki terminal me dikhe ki bot kya kar raha hai
+logging.basicConfig(level=logging.INFO)
 
 API_ID = int(os.environ.get("API_ID", "0"))
 API_HASH = os.environ.get("API_HASH", "")
@@ -10,13 +14,21 @@ PAID_CHANNEL_ID = int(os.environ.get("PAID_CHANNEL_ID", "-100xxxxxxxxx"))
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "0"))
 
 app = Client(
-    "paid_video_bot",
+    "my_bot",
     api_id=API_ID,
     api_hash=API_HASH,
     bot_token=BOT_TOKEN
 )
 
 pending_users = set()
+
+@app.on_message(filters.command("start"))
+async def start_command(client, message):
+    print(f"Received /start from user: {message.from_user.id}") # Heroku logs me check karne ke liye
+    await message.reply_text(
+        "👋 Welcome! Bot is active and running successfully.\n\n"
+        "Aapko paid video ka link channel par mil jayega."
+    )
 
 @app.on_message(filters.command("paylink"))
 async def create_pay_link(client, message):
@@ -55,7 +67,7 @@ async def ask_utr(client, callback_query):
         "✍️ Kripya apne payment ka **12-digit ka UTR / Reference Number** yahan chat me bhej dein (jaise: 4235xxxxxxxx):"
     )
 
-@app.on_message(filters.text & ~filters.command(["paylink"]))
+@app.on_message(filters.text & ~filters.command(["start", "paylink"]))
 async def handle_utr(client, message):
     user_id = message.from_user.id
     if user_id in pending_users:
@@ -74,4 +86,5 @@ async def handle_utr(client, message):
             await message.reply_text("⚠️ Kuch error aaya hai. Kripya admin se contact karein.")
 
 if __name__ == "__main__":
+    print("Starting bot...")
     app.run()
