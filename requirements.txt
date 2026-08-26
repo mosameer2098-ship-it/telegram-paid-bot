@@ -2,4 +2,3 @@ pyrogram
 tgcrypto
 motor
 requests
-python-3.11.9
