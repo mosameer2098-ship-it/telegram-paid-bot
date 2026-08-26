@@ -1,4 +1,5 @@
 import os
+import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
@@ -7,7 +8,6 @@ API_HASH = os.environ.get("API_HASH", "")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 BHARATPE_UPI = os.environ.get("BHARATPE_UPI", "BHARATPE.8I0E1X0W7K37600@fbpe")
 PAID_CHANNEL_ID = int(os.environ.get("PAID_CHANNEL_ID", "-100xxxxxxxxx"))
-# Yahan apni Telegram Admin ID daalni hai (Heroku config vars se bhi utha sakta hai)
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "0"))
 
 app = Client(
@@ -21,7 +21,6 @@ pending_users = set()
 
 @app.on_message(filters.command("paylink"))
 async def create_pay_link(client, message):
-    # Security Check: Agar command bhejne wala admin nahi hai, toh rok do
     if message.from_user.id != ADMIN_ID:
         await message.reply_text("⛔ Yeh command sirf Channel Admin use kar sakta hai!")
         return
@@ -75,4 +74,14 @@ async def handle_utr(client, message):
         except Exception as e:
             await message.reply_text("⚠️ Kuch error aaya hai. Kripya admin se contact karein.")
 
-app.run()
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop_policy().get_event_loop()
+    loop.run_until_complete(app.start())
+    print("Bot started successfully!")
+    idle_future = loop.create_future()
+    try:
+        loop.run_until_complete(idle_future)
+    except KeyboardInterrupt:
+        print("Bot stopped.")
+    finally:
+        loop.run_until_complete(app.stop())
