@@ -35,20 +35,19 @@ async def create_pay_link(client, message):
         
         amount = args[1]
         
-        # Ab hum button nahi, seedha text me payment link aur niche UTR ka chota button denge
-        pay_url = f"https://mercury.phonepe.com/pay?pa=BHARATPE.8I0E1X0W7K37600@fbpe&am={amount}&cu=INR"
+        # Seedha UPI Intent Link jo mobile me direct payment app khol dega
+        upi_url = f"upi://pay?pa=BHARATPE.8I0E1X0W7K37600@fbpe&pn=KahaniyonKaGhar&am={amount}&cu=INR"
         
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("✅ Payment Karne ke Baad UTR Bhejein", callback_data="enter_utr")]
+            [InlineKeyboardButton(f"💳 Pay ₹{amount} Now", url=upi_url)],
+            [InlineKeyboardButton("✅ Payment ke Baad UTR Bhejein", callback_data="enter_utr")]
         ])
         
         await message.reply_text(
-            f"🎬 **Paid Video Payment Link**\n\n"
+            f"🎬 **Paid Video Payment**\n\n"
             f"💰 Price: ₹{amount}\n\n"
-            f"👉 **Payment karne ke liye is link par click karein:**\n{pay_url}\n\n"
-            f"Payment karne ke baad niche wale button par click karke UTR number bhej dein.",
-            reply_markup=keyboard,
-            disable_web_page_preview=True
+            f"Niche diye gaye button par click karke payment karein (PhonePe, GPay, Paytm sabhi chalenge). Payment ke baad UTR bhej dein:",
+            reply_markup=keyboard
         )
     except Exception as e:
         await message.reply_text(f"⚠️ Error: {str(e)}")
