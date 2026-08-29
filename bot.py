@@ -1,82 +1,37 @@
 import os
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import ChatJoinRequest
 
-API_ID = int(os.environ.get("API_ID", "0"))
+# Environment variables se credentials uthayenge taaki security bani rahe
+API_ID = int(os.environ.get("API_ID", 0))
 API_HASH = os.environ.get("API_HASH", "")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
-PAID_CHANNEL_ID = int(os.environ.get("PAID_CHANNEL_ID", "-100xxxxxxxxx"))
-ADMIN_ID = int(os.environ.get("ADMIN_ID", "0"))
 
 app = Client(
-    "my_bot",
+    "auto_accept_bot",
     api_id=API_ID,
     api_hash=API_HASH,
     bot_token=BOT_TOKEN
 )
 
-pending_users = set()
-
 @app.on_message(filters.command("start"))
 async def start_command(client, message):
-    await message.reply_text("👋 Welcome! Bot is running successfully.")
-
-@app.on_message(filters.command("paylink"))
-async def create_pay_link(client, message):
-    if message.from_user.id != ADMIN_ID:
-        await message.reply_text("⛔ Yeh command sirf Admin use kar sakta hai!")
-        return
-        
-    try:
-        args = message.text.split()
-        if len(args) < 2:
-            await message.reply_text("⚠️ Kripya price batayein. Use aise karein:\n`/paylink 50`")
-            return
-        
-        amount = args[1]
-        
-        # Seedha UPI Intent Link jo mobile me direct payment app khol dega
-        upi_url = f"upi://pay?pa=BHARATPE.8I0E1X0W7K37600@fbpe&pn=KahaniyonKaGhar&am={amount}&cu=INR"
-        
-        keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton(f"💳 Pay ₹{amount} Now", url=upi_url)],
-            [InlineKeyboardButton("✅ Payment ke Baad UTR Bhejein", callback_data="enter_utr")]
-        ])
-        
-        await message.reply_text(
-            f"🎬 **Paid Video Payment**\n\n"
-            f"💰 Price: ₹{amount}\n\n"
-            f"Niche diye gaye button par click karke payment karein (PhonePe, GPay, Paytm sabhi chalenge). Payment ke baad UTR bhej dein:",
-            reply_markup=keyboard
-        )
-    except Exception as e:
-        await message.reply_text(f"⚠️ Error: {str(e)}")
-
-@app.on_callback_query(filters.regex("enter_utr"))
-async def ask_utr(client, callback_query):
-    user_id = callback_query.from_user.id
-    pending_users.add(user_id)
-    await callback_query.message.reply_text(
-        "✍️ Kripya apne payment ka **12-digit ka UTR / Reference Number** yahan chat me bhej dein:"
+    text = (
+        "I'm alive!\n"
+        "I can approve new join requests in chats. "
+        "Just add me in the chat with invite users permission."
     )
+    await message.reply_text(text)
 
-@app.on_message(filters.text & ~filters.command(["start", "paylink"]))
-async def handle_utr(client, message):
-    user_id = message.from_user.id
-    if user_id in pending_users:
-        utr_text = message.text.strip()
-        pending_users.remove(user_id)
-        
-        try:
-            invite_link = await client.create_chat_invite_link(
-                chat_id=PAID_CHANNEL_ID,
-                member_limit=1
-            )
-            await message.reply_text(
-                f"🎉 UTR Received: `{utr_text}`\n\nAapki payment verify ho gayi hai! Yeh raha aapka private channel ka link:\n\n{invite_link.invite_link}"
-            )
-        except Exception as e:
-            await message.reply_text("⚠️ Kuch error aaya hai. Kripya admin se contact karein.")
+@app.on_chat_join_request()
+async def accept_join_request(client, chat_join_request: ChatJoinRequest):
+    chat = chat_join_request.chat
+    user = chat_join_request.from_user
+    
+    try:
+        await client.approve_chat_join_request(chat_id=chat.id, user_id=user.id)
+    except Exception as e:
+        print(f"Error: {e}")
 
-if __name__ == "__main__":
-    app.run()
+print("Bot is starting...")
+app.run()
